@@ -15,10 +15,14 @@
 
 @interface MTInfoPanel ()
 
+@property (nonatomic, assign) MTInfoPanelType panelType;
+@property (nonatomic, strong) UIColor *gradientStartColor;
+@property (nonatomic, strong) UIColor *gradientEndColor;
 @property (nonatomic, strong) UILabel *titleLabel;
 @property (nonatomic, strong) UILabel *detailLabel;
 @property (nonatomic, strong) UIImageView *thumbImage;
 @property (nonatomic, strong) UIView *backgroundGradient;
+@property (nonatomic, strong) UIActivityIndicatorView *activityIndicator;
 
 + (MTInfoPanel *)infoPanel;
 
@@ -31,10 +35,14 @@
 
 @implementation MTInfoPanel
 
+@synthesize panelType = panelType_;
+@synthesize gradientStartColor = gradientStartColor_;
+@synthesize gradientEndColor = gradientEndColor_;
 @synthesize titleLabel = titleLabel_;
 @synthesize detailLabel = detailLabel_;
 @synthesize thumbImage = thumbImage_;
 @synthesize backgroundGradient = backgroundGradient_;
+@synthesize activityIndicator = activityIndicator_;
 @synthesize onTouched = onTouched_;
 @synthesize delegate = delegate_;
 @synthesize onFinished = onFinished_;
@@ -66,114 +74,38 @@
     return [self showPanelInView:view type:type title:title subtitle:subtitle image:image hideAfter:-1.];
 }
 
-+ (MTInfoPanel *)showPanelInView:(UIView*)view 
-                            type:(MTInfoPanelType)type 
-                           title:(NSString *)title
-                        subtitle:(NSString *)subtitle
-                           image:(UIImage *)image
-                       hideAfter:(NSTimeInterval)interval {
-    UIColor *startColor = nil;
-    UIColor *endColor = nil;
-    UIFont *titleFont = [UIFont boldSystemFontOfSize:14.];
-    UIFont *detailFont = [UIFont systemFontOfSize:14.];
-    UIColor *titleColor = [UIColor whiteColor];
-    UIColor *detailColor = nil;
-    
-    switch (type) {
-        case MTInfoPanelTypeInfo: {
-            startColor = MT_RGBA(91, 134, 206, 1.0);
-            endColor = MT_RGBA(69, 106, 177, 1.0);
-            detailColor = MT_RGBA(210, 210, 235, 1.0);
-            
-            if (image == nil) {
-                image = [UIImage imageNamed:@"MTInfoPanel.bundle/Tick"];
-            }
-            break;
-        }
-            
-        case MTInfoPanelTypeNotice: {
-            startColor = MT_RGBA(118, 119, 120, 1.f);
-            endColor = MT_RGBA(63, 65, 67, 1.f);
-            detailColor = MT_RGBA(210, 210, 235, 1.0);
-            
-            if (image == nil) {
-                image = [UIImage imageNamed:@"MTInfoPanel.bundle/Notice"];
-            }
-            break;
-        }
-            
-        case MTInfoPanelTypeSuccess: {
-            startColor = MT_RGBA(127, 191, 34, 1.0000);
-            endColor = MT_RGBA(136, 159, 86, 1.0000);
-            detailColor = MT_RGBA(59, 69, 39, 1.0000);
-            
-            if (image == nil) {
-                image = [UIImage imageNamed:@"MTInfoPanel.bundle/Tick"];
-            }
-            break;
-        }
-            
-            
-        case MTInfoPanelTypeWarning: {
-            startColor = MT_RGBA(253, 178, 77, 1.0);
-            endColor = MT_RGBA(196, 123, 20, 1.0);
-            detailColor = MT_RGBA(97, 61, 24, 1.0000);
-            
-            if (image == nil) {
-                image = [UIImage imageNamed:@"MTInfoPanel.bundle/Warning"];
-            }
-            break;
-        }
-            
-        case MTInfoPanelTypeError:
-        default: {
-            startColor = MT_RGBA(200, 36, 0, 1.0);
-            endColor = MT_RGBA(150, 24, 0, 1.0);
-            detailColor = MT_RGBA(255, 166, 166, 1.0);
-            
-            if (image == nil) {
-                image = [UIImage imageNamed:@"MTInfoPanel.bundle/Warning"];
-            }            
-            break;
-        }
-    }
-    
-    return [self showPanelInView:view
-                           title:title
-                        subtitle:subtitle
-                           image:image
-                      startColor:startColor
-                        endColor:endColor
-                      titleColor:titleColor
-                 detailTextColor:detailColor
-                       titleFont:titleFont
-                  detailTextFont:detailFont
-                       hideAfter:interval];
-}
-
 + (MTInfoPanel *)showPanelInView:(UIView *)view 
+                            type:(MTInfoPanelType)type
                            title:(NSString *)title
                         subtitle:(NSString *)subtitle 
                            image:(UIImage *)image
-                      startColor:(UIColor *)startColor
-                        endColor:(UIColor *)endColor
-                      titleColor:(UIColor *)titleColor
-                 detailTextColor:(UIColor *)detailColor
-                       titleFont:(UIFont *)titleFont
-                  detailTextFont:(UIFont *)detailFont
                        hideAfter:(NSTimeInterval)interval
 {
+    MTInfoPanel *panel = [self staticPanelWithFrame:view.bounds type:type title:title subtitle:subtitle image:image];
+    
+    [view addSubview:panel];
+    
+    if (interval > 0) {
+        [panel performSelector:@selector(hidePanel) withObject:view afterDelay:interval]; 
+    }
+    
+    return panel;
+}
+
++(MTInfoPanel *)staticPanelWithFrame:(CGRect)frame
+                                type:(MTInfoPanelType)type
+                               title:(NSString *)title
+                            subtitle:(NSString *)subtitle 
+                               image:(UIImage *)image
+{
     MTInfoPanel *panel = [MTInfoPanel infoPanel];
-    // panel height when no subtitle set
+
+        // panel height when no subtitle set
     CGFloat panelHeight = 50.f;
     
-    // update appearance of panel
-    panel.titleLabel.textColor = titleColor;
-    panel.titleLabel.font = titleFont;
-    panel.detailLabel.textColor = detailColor;
-    panel.detailLabel.font = detailFont;
+    [panel setPanelType:type];
     
-    // set values of views
+        // set values of views
     panel.titleLabel.text = title;
     subtitle = [subtitle stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
     
@@ -182,27 +114,19 @@
         [panel.detailLabel sizeToFit];
         
         panelHeight = MAX(CGRectGetMaxY(panel.thumbImage.frame), CGRectGetMaxY(panel.detailLabel.frame));
-        // padding at bottom
+            // padding at bottom
         panelHeight += 7.f;
     } else {
         panel.detailLabel.hidden = YES;
         panel.thumbImage.frame = CGRectMake(15, 5, 35, 35);
         panel.titleLabel.frame = CGRectMake(57, 12, 240, 21);
     }
-    
     if (image != nil) {
         panel.thumbImage.image = image;
     }
     
-    // update frame of panel
-    panel.frame = CGRectMake(0, 0, view.bounds.size.width, panelHeight);
-    [panel setBackgroundGradientFrom:startColor to:endColor];
-    [view addSubview:panel];
-    
-    if (interval > 0) {
-        [panel performSelector:@selector(hidePanel) withObject:view afterDelay:interval]; 
-    }
-    
+    panel.frame = CGRectMake(frame.origin.x, frame.origin.y, frame.size.width, panelHeight);
+    [panel setBackgroundGradientFrom:panel.gradientStartColor to:panel.gradientEndColor];
     return panel;
 }
 
@@ -217,6 +141,7 @@
 + (MTInfoPanel *)showPanelInWindow:(UIWindow*)window type:(MTInfoPanelType)type title:(NSString *)title subtitle:(NSString *)subtitle image:(UIImage *)image {
     return [self showPanelInWindow:window type:type title:title subtitle:subtitle image:image hideAfter:-1.];
 }
+
 + (MTInfoPanel *)showPanelInWindow:(UIWindow*)window type:(MTInfoPanelType)type title:(NSString *)title subtitle:(NSString *)subtitle image:(UIImage *)image hideAfter:(NSTimeInterval)interval {
     MTInfoPanel *panel = [self showPanelInView:window type:type title:title subtitle:subtitle image:image hideAfter:interval];
     
@@ -267,6 +192,77 @@
 #pragma mark -
 #pragma mark Setter/Getter
 ////////////////////////////////////////////////////////////////////////
+
+- (void)setPanelType:(MTInfoPanelType)panelType {
+    UIColor *startColor = nil;
+    UIColor *endColor = nil;
+    UIFont *titleFont = [UIFont boldSystemFontOfSize:14.];
+    UIFont *detailFont = [UIFont systemFontOfSize:14.];
+    UIColor *titleColor = [UIColor whiteColor];
+    UIColor *detailColor = nil;
+    UIImage *image = nil;
+    
+    switch (panelType) {
+        case MTInfoPanelTypeActivity:
+        case MTInfoPanelTypeInfo: {
+            startColor = MT_RGBA(117,177,165,1.0); //MT_RGBA(91, 134, 206, 1.0);
+            endColor = MT_RGBA(91,138,129,1.0); //MT_RGBA(69, 106, 177, 1.0);
+            detailColor = MT_RGBA(245,245,237,1.0); //MT_RGBA(210, 210, 235, 1.0);
+            titleColor = detailColor;
+            image = [UIImage imageNamed:@"MTInfoPanel.bundle/Tick"];
+            break;
+        }
+            
+        case MTInfoPanelTypeNotice: {
+            startColor = MT_RGBA(118, 119, 120, 1.0);
+            endColor = MT_RGBA(63, 65, 67, 1.0);
+            detailColor = MT_RGBA(210, 210, 235, 1.0);
+            image = [UIImage imageNamed:@"MTInfoPanel.bundle/Notice"];
+            break;
+        }
+            
+        case MTInfoPanelTypeSuccess: {
+            startColor = MT_RGBA(127, 191, 34, 1.0);
+            endColor = MT_RGBA(136, 159, 86, 1.0);
+            detailColor = MT_RGBA(59, 69, 39, 1.0);
+            image = [UIImage imageNamed:@"MTInfoPanel.bundle/Tick"];
+            break;
+        }
+            
+            
+        case MTInfoPanelTypeWarning: {
+            startColor = MT_RGBA(253, 178, 77, 1.0);
+            endColor = MT_RGBA(196, 123, 20, 1.0);
+            detailColor = MT_RGBA(97, 61, 24, 1.0);
+            image = [UIImage imageNamed:@"MTInfoPanel.bundle/Warning"];
+            break;
+        }
+            
+        case MTInfoPanelTypeError:
+        default: {
+            startColor = MT_RGBA(200, 36, 0, 1.0);
+            endColor = MT_RGBA(150, 24, 0, 1.0);
+            detailColor = MT_RGBA(255, 166, 166, 1.0);
+            image = [UIImage imageNamed:@"MTInfoPanel.bundle/Warning"];
+            break;
+        }
+    }
+    self.gradientStartColor = startColor;
+    self.gradientEndColor = endColor;
+    self.titleLabel.textColor = titleColor;
+    self.titleLabel.font = titleFont;
+    self.detailLabel.textColor = detailColor;
+    self.detailLabel.font = detailFont;
+    if (image)
+        self.thumbImage.image = image;
+    if (panelType == MTInfoPanelTypeActivity) {
+        self.thumbImage.hidden = YES;
+        self.activityIndicator.hidden = NO;
+        [self.activityIndicator startAnimating];
+        if ([self.activityIndicator respondsToSelector:@selector(setColor:)])
+            [self.activityIndicator performSelector:@selector(setColor:) withObject:detailColor];
+    }
+}
 
 -(void)setBackgroundGradientFrom:(UIColor *)fromColor to:(UIColor *)toColor {
     CAGradientLayer *gradient = [CAGradientLayer layer];
@@ -342,7 +338,7 @@
 	transition.subtype = kCATransitionFromTop;
 	[self.layer addAnimation:transition forKey:nil];
     self.frame = CGRectMake(0, -self.frame.size.height, self.frame.size.width, self.frame.size.height); 
-    
+
     [self performSelector:@selector(finish)
                withObject:nil
                afterDelay:transition.duration];
@@ -402,10 +398,10 @@
     titleLabel_.backgroundColor = [UIColor clearColor];
     titleLabel_.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleBottomMargin;
     
-    titleLabel_.layer.shadowOffset = CGSizeMake(0.f, -0.5f);
+    titleLabel_.layer.shadowOffset = CGSizeMake(0.f, -1.f);
     titleLabel_.layer.shadowColor = [UIColor blackColor].CGColor;
-	titleLabel_.layer.shadowRadius = 0.5f;
-	titleLabel_.layer.shadowOpacity = 0.95;
+	titleLabel_.layer.shadowRadius = 1.f;
+	titleLabel_.layer.shadowOpacity = 0.7;
     
     [self addSubview:titleLabel_];
     
@@ -417,6 +413,15 @@
     
     thumbImage_ = [[UIImageView alloc] initWithFrame:CGRectMake(9.f, 9.f, 37.f, 34.f)];
     [self addSubview:thumbImage_];
+    
+    activityIndicator_ = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
+    activityIndicator_.center = thumbImage_.center;
+    activityIndicator_.hidden = YES;
+    activityIndicator_.layer.shadowOffset = CGSizeMake(0.f, -1.f);
+    activityIndicator_.layer.shadowColor = [UIColor blackColor].CGColor;
+	activityIndicator_.layer.shadowRadius = 1.f;
+	activityIndicator_.layer.shadowOpacity = 0.7;
+    [self addSubview:activityIndicator_];
     
     self.onTouched = @selector(hidePanel);
     self.autoresizingMask = UIViewAutoresizingFlexibleWidth;

@@ -28,7 +28,8 @@ typedef enum {
     MTInfoPanelTypeNotice,      // gray
     MTInfoPanelTypeSuccess,     // green
     MTInfoPanelTypeWarning,     // yellow
-    MTInfoPanelTypeError        // red
+    MTInfoPanelTypeError,       // red
+    MTInfoPanelTypeActivity,    // blue + activity indicator
 } MTInfoPanelType;
 
 @interface MTInfoPanel : UIView
@@ -54,23 +55,17 @@ typedef enum {
                         subtitle:(NSString *)subtitle
                            image:(UIImage *)image;
 
-+ (MTInfoPanel *)showPanelInView:(UIView *)view 
-                            type:(MTInfoPanelType)type
-                           title:(NSString *)title 
-                        subtitle:(NSString *)subtitle
-                           image:(UIImage *)image 
-                       hideAfter:(NSTimeInterval)interval;
++(MTInfoPanel *)staticPanelWithFrame:(CGRect)frame
+                                type:(MTInfoPanelType)type
+                               title:(NSString *)title
+                            subtitle:(NSString *)subtitle 
+                               image:(UIImage *)image;
 
-+ (MTInfoPanel *)showPanelInView:(UIView *)view 
++ (MTInfoPanel *)showPanelInView:(UIView *)view
+                            type:(MTInfoPanelType)type
                            title:(NSString *)title
                         subtitle:(NSString *)subtitle 
                            image:(UIImage *)image
-                      startColor:(UIColor *)startColor
-                        endColor:(UIColor *)endColor
-                      titleColor:(UIColor *)titleColor
-                 detailTextColor:(UIColor *)detailColor
-                       titleFont:(UIFont *)titleFont
-                  detailTextFont:(UIFont *)detailFont
                        hideAfter:(NSTimeInterval)interval;
 
 + (MTInfoPanel *)showPanelInWindow:(UIWindow *)window 
