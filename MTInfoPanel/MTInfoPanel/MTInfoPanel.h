@@ -37,6 +37,7 @@ typedef enum {
 @property (nonatomic, assign) SEL onTouched;
 @property (nonatomic, assign) id delegate;
 @property (nonatomic, assign) SEL onFinished;
+@property (nonatomic, assign) NSString *subtitle;
 
 + (MTInfoPanel *)showPanelInView:(UIView *)view
                             type:(MTInfoPanelType)type 
