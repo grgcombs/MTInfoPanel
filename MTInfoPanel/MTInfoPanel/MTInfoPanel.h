@@ -35,7 +35,7 @@ typedef enum {
 @interface MTInfoPanel : UIView
 
 @property (nonatomic, assign) SEL onTouched;
-@property (nonatomic, assign) id delegate;
+@property (nonatomic, weak) id delegate;
 @property (nonatomic, assign) SEL onFinished;
 
 + (MTInfoPanel *)showPanelInView:(UIView *)view
